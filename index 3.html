@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vela">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Vela — Professional Trading Journal">
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Apple touch icon (inline SVG converted) -->
+<link rel="apple-touch-icon" href="icon.svg">
+
+<title>Vela</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --surface: #111113;
+    --surface2: #18181c;
+    --border: #222228;
+    --green: #00e676;
+    --green-dim: rgba(0,230,118,0.1);
+    --green-mid: rgba(0,230,118,0.25);
+    --red: #ff3d57;
+    --red-dim: rgba(255,61,87,0.1);
+    --red-dim: rgba(255,61,87,0.1);
+    --text: #f0f0f2;
+    --muted: #6b6b75;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%; overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+  }
+
+  body {
+    display: flex; flex-direction: column;
+    max-width: 480px; margin: 0 auto;
+    position: relative;
+  }
+
+  /* SPLASH */
+  #splash {
+    position: fixed; inset: 0; z-index: 999;
+    background: #0a0a0b;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+    transition: opacity .5s ease;
+  }
+  #splash.hide { opacity: 0; pointer-events: none; }
+  .splash-logo {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .splash-icon {
+    width: 80px; height: 80px; border-radius: 22px;
+    background: linear-gradient(135deg, #0d2b1a 0%, #000 100%);
+    border: 1px solid #1a3a24;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 40px rgba(0,230,118,0.15);
+  }
+  .splash-name { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+  .splash-name span { color: var(--green); }
+  .splash-tagline { font-size: 13px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: .1em; }
+  .splash-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 1.2s ease infinite; }
+  @keyframes pulse { 0%,100%{opacity:.3;transform:scale(.8)} 50%{opacity:1;transform:scale(1)} }
+
+  /* INSTALL BANNER */
+  #installBanner {
+    display: none;
+    background: linear-gradient(135deg, #0d2b1a, #111);
+    border: 1px solid #1a3a24;
+    border-radius: 14px;
+    margin: 10px 16px 0;
+    padding: 14px 16px;
+    flex-shrink: 0;
+  }
+  #installBanner.show { display: flex; align-items: center; gap: 12px; }
+  .install-text { flex: 1; }
+  .install-text h4 { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .install-text p { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .install-btn {
+    background: var(--green); color: #000;
+    border: none; border-radius: 8px;
+    padding: 8px 14px; font-size: 12px; font-weight: 700;
+    font-family: 'Syne', sans-serif; cursor: pointer; white-space: nowrap;
+  }
+  .install-dismiss { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px; }
+
+  /* NAV */
+  .nav {
+    flex-shrink: 0;
+    background: rgba(10,10,11,0.95);
+    backdrop-filter: blur(20px);
+    padding: calc(var(--safe-top) + 12px) 20px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-left { display: flex; align-items: center; gap: 10px; }
+  .nav-icon {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: linear-gradient(135deg, #0d2b1a, #000);
+    border: 1px solid #1a3a24;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .nav-logo span { color: var(--green); }
+  .nav-right { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; text-align: right; }
+
+  /* SCROLL AREA */
+  .scroll-area {
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-bottom: calc(var(--safe-bottom) + 80px);
+  }
+  .scroll-area::-webkit-scrollbar { display: none; }
+
+  /* PAGE */
+  .page { display: none; padding: 14px 16px; }
+  .page.active { display: block; }
+
+  /* TABS */
+  .tabs {
+    flex-shrink: 0;
+    display: flex; gap: 6px;
+    padding: 10px 16px 0;
+    background: var(--bg);
+  }
+  .tab {
+    flex: 1; padding: 9px 0; border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted); font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: 'Syne', sans-serif;
+    transition: all .2s; letter-spacing: .02em;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tab.active {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  /* STATS GRID */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 13px 14px;
+    position: relative; overflow: hidden;
+  }
+  .stat-card::after {
+    content: ''; position: absolute; top: 0; right: 0;
+    width: 50px; height: 50px; border-radius: 50%;
+    background: var(--green-dim); transform: translate(16px,-16px);
+  }
+  .stat-label { font-size: 9px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; font-family: 'DM Mono', monospace; margin-bottom: 5px; }
+  .stat-value { font-size: 22px; font-weight: 800; color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.white { color: var(--text); }
+
+  /* SCORE */
+  .score-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px;
+    display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
+  }
+  .score-ring { width: 60px; height: 60px; flex-shrink: 0; position: relative; display: flex; align-items: center; justify-content: center; }
+  .score-ring svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+  .score-num { font-size: 20px; font-weight: 800; position: relative; z-index: 1; }
+  .score-info h3 { font-size: 16px; font-weight: 700; }
+  .score-info p { font-size: 12px; color: var(--green); margin-top: 2px; }
+
+  /* CHART */
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 14px; margin-bottom: 12px; overflow: hidden;
+  }
+  .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+  .chart-title { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-family: 'DM Mono', monospace; }
+  .chart-total { font-size: 24px; font-weight: 800; }
+  .chart-total.pos { color: var(--green); }
+  .chart-total.neg { color: var(--red); }
+  .chart-sub { font-size: 10px; color: var(--muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .chart-range { display: flex; gap: 6px; margin: 10px 0 12px; }
+  .range-btn {
+    padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);
+    background: none; color: var(--muted); font-size: 10px;
+    font-family: 'DM Mono', monospace; cursor: pointer; transition: all .15s;
+  }
+  .range-btn.active { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+
+  /* MONTHLY */
+  .monthly-section {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 14px; margin-bottom: 12px;
+  }
+  .monthly-section h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+  .monthly-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 7px 0; border-bottom: 1px solid var(--border);
+  }
+  .monthly-row:last-child { border-bottom: none; }
+  .monthly-row-label { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: .06em; text-transform: uppercase; }
+  .monthly-row-value { font-size: 20px; font-weight: 800; }
+
+  /* CALENDAR */
+  .cal-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden; margin-bottom: 12px;
+  }
+  .cal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; border-bottom: 1px solid var(--border);
+  }
+  .cal-title { font-size: 14px; font-weight: 700; }
+  .cal-nav { display: flex; gap: 8px; }
+  .cal-btn {
+    width: 30px; height: 30px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text); cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr) 52px;
+    gap: 1px; background: var(--border);
+  }
+  .cal-dow {
+    background: var(--surface); text-align: center; padding: 7px 0;
+    font-size: 9px; color: var(--muted);
+    font-family: 'DM Mono', monospace; letter-spacing: .04em;
+  }
+  .cal-dow.wk { color: var(--green); }
+  .cal-day {
+    background: var(--surface); min-height: 56px; padding: 5px 4px;
+    cursor: pointer; transition: background .12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cal-day:active { background: var(--surface2); }
+  .cal-day.other-month .day-num { color: #2a2a30; }
+  .cal-day.today { background: #0e1c14; }
+  .cal-day.today .day-num { color: var(--green); font-weight: 700; }
+  .cal-day.has-win { background: #0b1d10; }
+  .cal-day.has-loss { background: #1d0b0e; }
+  .day-num { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .day-cnt { font-size: 8px; color: var(--muted); margin-top: 1px; font-family: 'DM Mono', monospace; }
+  .day-pnl { font-size: 9px; font-weight: 700; margin-top: 1px; line-height: 1.2; }
+  .day-pnl.pos { color: var(--green); }
+  .day-pnl.neg { color: var(--red); }
+  .week-cell {
+    background: var(--surface2); min-height: 56px; padding: 5px 4px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+  }
+  .wk-lbl { font-size: 7px; color: var(--muted); font-family: 'DM Mono', monospace; text-transform: uppercase; }
+  .wk-val { font-size: 9px; font-weight: 700; margin-top: 2px; text-align: center; line-height: 1.2; }
+  .wk-val.pos { color: var(--green); }
+  .wk-val.neg { color: var(--red); }
+  .wk-val.zero { color: var(--muted); }
+
+  /* LOG FORM */
+  .log-form {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 18px; margin-bottom: 12px;
+  }
+  .log-form h3 { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1/-1; }
+  .form-label { font-size: 9px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: .1em; text-transform: uppercase; }
+  .form-input, .form-select {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text);
+    font-size: 16px; /* 16px prevents iOS zoom */
+    font-family: 'DM Mono', monospace;
+    padding: 11px 12px; outline: none; width: 100%;
+    -webkit-appearance: none; appearance: none;
+    transition: border-color .2s;
+  }
+  .form-input:focus, .form-select:focus { border-color: var(--green); }
+  .submit-btn {
+    width: 100%; padding: 14px; border-radius: 12px; border: none;
+    background: var(--green); color: #000; font-size: 15px; font-weight: 800;
+    font-family: 'Syne', sans-serif; cursor: pointer; margin-top: 4px;
+    letter-spacing: .02em; transition: transform .1s, opacity .1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .submit-btn:active { transform: scale(.97); opacity: .85; }
+
+  /* TRADES */
+  .trades-section { margin-bottom: 12px; }
+  .trades-section h3 { font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-family: 'DM Mono', monospace; }
+  .trade-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 7px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: relative; overflow: hidden;
+  }
+  .trade-item::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  }
+  .trade-item.win::before { background: var(--green); }
+  .trade-item.loss::before { background: var(--red); }
+  .trade-left h4 { font-size: 13px; font-weight: 700; }
+  .trade-left p { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 2px; }
+  .trade-right { text-align: right; }
+  .trade-pnl { font-size: 16px; font-weight: 800; }
+  .trade-pnl.pos { color: var(--green); }
+  .trade-pnl.neg { color: var(--red); }
+  .trade-meta { font-size: 9px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 2px; }
+  .trade-delete {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--muted);
+    width: 26px; height: 26px; font-size: 12px;
+    cursor: pointer; display: none; align-items: center; justify-content: center;
+  }
+  .trade-item:active .trade-delete, .trade-item.show-del .trade-delete { display: flex; }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 36px 20px; color: var(--muted); font-size: 13px; }
+  .empty-icon { font-size: 32px; margin-bottom: 10px; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75);
+    z-index: 300; align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: 20px 20px 0 0;
+    width: 100%; max-width: 480px; padding: 20px;
+    padding-bottom: calc(20px + var(--safe-bottom));
+    max-height: 75vh; overflow-y: auto;
+    border: 1px solid var(--border); border-bottom: none;
+  }
+  .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .modal-title { font-size: 15px; font-weight: 700; }
+  .modal-close { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); width: 28px; height: 28px; border-radius: 8px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: calc(var(--safe-bottom) + 84px); left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--green); color: #000;
+    padding: 9px 20px; border-radius: 99px;
+    font-size: 13px; font-weight: 700;
+    opacity: 0; transition: all .25s; pointer-events: none;
+    white-space: nowrap; z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    flex-shrink: 0;
+    background: rgba(10,10,11,0.97);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex; padding: 8px 10px calc(var(--safe-bottom) + 8px);
+    gap: 4px;
+  }
+  .bnav-btn {
+    flex: 1; padding: 8px 0; border-radius: 10px;
+    border: 1px solid transparent; background: none;
+    color: var(--muted); font-size: 10px; font-weight: 700;
+    cursor: pointer; font-family: 'Syne', sans-serif;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    transition: all .15s; letter-spacing: .02em;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bnav-btn .icon { font-size: 19px; }
+  .bnav-btn.active { color: var(--green); background: var(--green-dim); border-color: rgba(0,230,118,0.15); }
+
+  /* P&L input color feedback */
+  input.pnl-pos { color: var(--green) !important; }
+  input.pnl-neg { color: var(--red) !important; }
+
+  /* Add to home screen tip (iOS) */
+  .ios-tip {
+    display: none;
+    position: fixed; bottom: calc(var(--safe-bottom) + 76px); left: 16px; right: 16px;
+    background: #1a1a1f; border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px 16px; z-index: 500; font-size: 13px;
+  }
+  .ios-tip.show { display: block; }
+  .ios-tip strong { color: var(--green); }
+  .ios-tip-close { float: right; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">
+    <div class="splash-icon">
+      <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+        <path d="M8 34 L22 10 L36 34" stroke="#00e676" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M14 24 L22 10 L30 24" fill="rgba(0,230,118,0.15)" stroke="none"/>
+        <circle cx="22" cy="10" r="2.5" fill="#00e676"/>
+      </svg>
+    </div>
+    <div class="splash-name">Ve<span>la</span></div>
+    <div class="splash-tagline">TRADING JOURNAL</div>
+  </div>
+  <div class="splash-dot"></div>
+</div>
+
+<!-- INSTALL BANNER -->
+<div id="installBanner">
+  <div style="font-size:22px">📲</div>
+  <div class="install-text">
+    <h4>Install Vela</h4>
+    <p>Add to home screen for app experience</p>
+  </div>
+  <button class="install-btn" id="installBtn">Install</button>
+  <button class="install-dismiss" id="dismissInstall">×</button>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-left">
+    <div class="nav-icon">
+      <svg width="18" height="18" viewBox="0 0 44 44" fill="none">
+        <path d="M8 34 L22 10 L36 34" stroke="#00e676" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="22" cy="10" r="2.5" fill="#00e676"/>
+      </svg>
+    </div>
+    <div class="nav-logo">Ve<span>la</span></div>
+  </div>
+  <div class="nav-right" id="navDate"></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('dashboard')">Dashboard</button>
+  <button class="tab" onclick="switchTab('calendar')">Calendar</button>
+  <button class="tab" onclick="switchTab('log')">+ Log</button>
+</div>
+
+<!-- SCROLL AREA -->
+<div class="scroll-area" id="scrollArea">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <!-- Score -->
+    <div class="score-card">
+      <div class="score-ring">
+        <svg width="60" height="60" viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="26" fill="none" stroke="#1a1a1f" stroke-width="5"/>
+          <circle cx="30" cy="30" r="26" fill="none" stroke="var(--green)" stroke-width="5"
+            stroke-linecap="round" id="scoreArc" stroke-dasharray="0 164"/>
+        </svg>
+        <span class="score-num" id="scoreNum">—</span>
+      </div>
+      <div class="score-info">
+        <h3>Trader Score</h3>
+        <p id="scoreLabel">No trades yet</p>
+      </div>
+    </div>
+
+    <!-- Capital Setting -->
+    <div id="capitalCard" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
+      <div style="flex:1">
+        <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Starting Capital</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:16px;color:var(--muted);font-family:'DM Mono',monospace">$</span>
+          <input type="number" id="capitalInput" placeholder="10000" inputmode="decimal"
+            style="background:none;border:none;outline:none;font-size:20px;font-weight:800;color:var(--text);font-family:'DM Mono',monospace;width:100%"
+            onchange="saveCapital(this.value)">
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Returns</div>
+        <div style="font-size:20px;font-weight:800;" id="returnsVal">—</div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Win Rate</div><div class="stat-value" id="s-wr">—</div></div>
+      <div class="stat-card"><div class="stat-label">Total P&amp;L</div><div class="stat-value" id="s-pnl">—</div></div>
+      <div class="stat-card"><div class="stat-label">Profit Factor</div><div class="stat-value white" id="s-pf">—</div></div>
+      <div class="stat-card"><div class="stat-label">Risk/Reward</div><div class="stat-value white" id="s-rr">—</div></div>
+    </div>
+
+    <!-- Growth Chart -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Account Growth</div>
+          <div class="chart-total pos" id="chartTotalVal">$0.0</div>
+          <div class="chart-sub" id="chartSubVal">no trades yet</div>
+        </div>
+      </div>
+      <div class="chart-range">
+        <button class="range-btn active" onclick="setRange('all',this)">All</button>
+        <button class="range-btn" onclick="setRange('30',this)">30D</button>
+        <button class="range-btn" onclick="setRange('7',this)">7D</button>
+      </div>
+      <canvas id="growthChart" height="130"></canvas>
+    </div>
+
+    <!-- Monthly Stats -->
+    <div class="monthly-section">
+      <h3>Monthly Summary</h3>
+      <div class="monthly-row"><span class="monthly-row-label">Win Rate</span><span class="monthly-row-value" id="m-wr" style="color:var(--green)">—</span></div>
+      <div class="monthly-row"><span class="monthly-row-label">Risk/Reward</span><span class="monthly-row-value" id="m-rr" style="color:var(--green)">—</span></div>
+      <div class="monthly-row"><span class="monthly-row-label">Profit Factor</span><span class="monthly-row-value" id="m-pf" style="color:var(--green)">—</span></div>
+      <div class="monthly-row"><span class="monthly-row-label">Best Day P/L</span><span class="monthly-row-value" id="m-best" style="color:var(--green)">—</span></div>
+      <div class="monthly-row"><span class="monthly-row-label">Worst Day P/L</span><span class="monthly-row-value" id="m-worst" style="color:var(--red)">—</span></div>
+      <div class="monthly-row"><span class="monthly-row-label">Avg Daily P/L</span><span class="monthly-row-value" id="m-avg" style="color:var(--green)">—</span></div>
+      <div class="monthly-row"><span class="monthly-row-label">Total Trades</span><span class="monthly-row-value" id="m-total" style="color:var(--text)">—</span></div>
+    </div>
+
+    <!-- Recent -->
+    <div class="trades-section">
+      <h3>Recent Trades</h3>
+      <div id="recentList"></div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="page" id="page-calendar">
+    <div class="cal-card">
+      <div class="cal-header">
+        <span class="cal-title" id="calTitle"></span>
+        <div class="cal-nav">
+          <button class="cal-btn" onclick="changeMonth(-1)">‹</button>
+          <button class="cal-btn" onclick="changeMonth(1)">›</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="page" id="page-log">
+    <div class="log-form">
+      <h3>Log Trade</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Symbol</label>
+          <input class="form-input" id="f-symbol" placeholder="NQ, ES, AAPL" maxlength="10" autocomplete="off" autocapitalize="characters">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input class="form-input" type="date" id="f-date">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Direction</label>
+          <select class="form-select" id="f-dir">
+            <option>Long</option>
+            <option>Short</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contracts</label>
+          <input class="form-input" type="number" id="f-contracts" placeholder="1" min="1" inputmode="decimal">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Entry</label>
+          <input class="form-input" type="number" id="f-entry" placeholder="0.00" step="0.01" inputmode="decimal">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Exit</label>
+          <input class="form-input" type="number" id="f-exit" placeholder="0.00" step="0.01" inputmode="decimal">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">P&amp;L ($)</label>
+          <div style="display:flex;gap:6px">
+            <button type="button" id="pnlSign" onclick="togglePnlSign()"
+              style="width:44px;flex-shrink:0;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--green);font-size:20px;font-weight:800;cursor:pointer;font-family:monospace">+</button>
+            <input class="form-input" type="number" id="f-pnl" placeholder="0.00" step="0.01" inputmode="decimal" min="0" style="flex:1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Session</label>
+          <select class="form-select" id="f-session">
+            <option>Pre-Market</option>
+            <option selected>Regular</option>
+            <option>After-Hours</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group full">
+          <label class="form-label">Notes</label>
+          <input class="form-input" id="f-notes" placeholder="Setup, emotions, mistakes...">
+        </div>
+      </div>
+      <button class="submit-btn" onclick="logTrade()">Add Trade</button>
+    </div>
+
+    <div class="trades-section">
+      <h3>All Trades</h3>
+      <div id="allList"></div>
+    </div>
+  </div>
+
+</div><!-- end scroll area -->
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="bnav-btn active" onclick="switchTab('dashboard')">
+    <span class="icon">📊</span>Dashboard
+  </button>
+  <button class="bnav-btn" onclick="switchTab('calendar')">
+    <span class="icon">📅</span>Calendar
+  </button>
+  <button class="bnav-btn" onclick="switchTab('log')">
+    <span class="icon">✏️</span>Log
+  </button>
+</div>
+
+<!-- Day Modal -->
+<div class="modal-overlay" id="dayModal" onclick="closeDayModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle"></span>
+      <button class="modal-close" onclick="closeDayModalBtn()">×</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Edit Trade Modal -->
+<div class="modal-overlay" id="editModal" onclick="closeEditModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">Edit Trade</span>
+      <button class="modal-close" onclick="closeEditModalBtn()">×</button>
+    </div>
+    <div id="editBody">
+      <input type="hidden" id="e-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div class="form-group"><label class="form-label">Symbol</label><input class="form-input" id="e-symbol" autocapitalize="characters"></div>
+        <div class="form-group"><label class="form-label">Date</label><input class="form-input" type="date" id="e-date"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div class="form-group"><label class="form-label">Direction</label><select class="form-select" id="e-dir"><option>Long</option><option>Short</option></select></div>
+        <div class="form-group"><label class="form-label">Contracts</label><input class="form-input" type="number" id="e-contracts" inputmode="decimal"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div class="form-group"><label class="form-label">Entry</label><input class="form-input" type="number" id="e-entry" step="0.01" inputmode="decimal"></div>
+        <div class="form-group"><label class="form-label">Exit</label><input class="form-input" type="number" id="e-exit" step="0.01" inputmode="decimal"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div class="form-group"><label class="form-label">P&L ($)</label><input class="form-input" type="number" id="e-pnl" step="0.01" inputmode="decimal"></div>
+        <div class="form-group"><label class="form-label">Session</label><select class="form-select" id="e-session"><option>Pre-Market</option><option>Regular</option><option>After-Hours</option></select></div>
+      </div>
+      <div style="margin-bottom:10px"><div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="e-notes"></div></div>
+      <button class="submit-btn" onclick="saveEdit()" style="margin-bottom:8px">Save Changes</button>
+      <button onclick="deleteFromEdit()" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--red);background:var(--red-dim);color:var(--red);font-size:14px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer">Delete Trade</button>
+    </div>
+  </div>
+</div>
+
+<!-- iOS install tip -->
+<div class="ios-tip" id="iosTip">
+  <button class="ios-tip-close" onclick="document.getElementById('iosTip').classList.remove('show')">×</button>
+  To install Vela: tap <strong>Share ↑</strong> then <strong>"Add to Home Screen"</strong>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────
+let trades = JSON.parse(localStorage.getItem('vela_trades') || '[]');
+
+// ── DATE HELPER ───────────────────────────────────────
+function fmtDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+let calYear, calMonth, chartRange = 'all';
+const now = new Date();
+calYear = now.getFullYear(); calMonth = now.getMonth();
+
+// ── INIT ──────────────────────────────────────────────
+document.getElementById('f-date').value = (function(){
+  const y=now.getFullYear(), m=String(now.getMonth()+1).padStart(2,'0'), d=String(now.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+d;
+})();
+document.getElementById('navDate').textContent = now.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+
+// P&L color feedback
+document.getElementById('f-pnl').addEventListener('input', function() {
+  const sign = document.getElementById('pnlSign').textContent === '+' ? 1 : -1;
+  const v = parseFloat(this.value) * sign;
+  this.className = 'form-input' + (isNaN(v) ? '' : sign >= 0 ? ' pnl-pos' : ' pnl-neg');
+});
+
+// Splash hide
+window.addEventListener('load', () => {
+  setTimeout(() => document.getElementById('splash').classList.add('hide'), 1200);
+});
+
+// ── SAVE ──────────────────────────────────────────────
+function save() { localStorage.setItem('vela_trades', JSON.stringify(trades)); }
+
+// ── PWA INSTALL ───────────────────────────────────────
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('installBanner').classList.remove('show');
+});
+document.getElementById('dismissInstall').addEventListener('click', () => {
+  document.getElementById('installBanner').classList.remove('show');
+  // Show iOS tip on Safari
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.navigator.standalone;
+  if (isIOS && !isStandalone) document.getElementById('iosTip').classList.add('show');
+});
+
+// Show iOS tip immediately on iOS Safari if not installed
+window.addEventListener('load', () => {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.navigator.standalone;
+  const shown = localStorage.getItem('vela_ios_tip');
+  if (isIOS && !isStandalone && !shown) {
+    setTimeout(() => {
+      document.getElementById('iosTip').classList.add('show');
+      localStorage.setItem('vela_ios_tip', '1');
+    }, 2500);
+  }
+});
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// ── TABS ──────────────────────────────────────────────
+let activeTab = 'dashboard';
+function switchTab(t) {
+  activeTab = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+t).classList.add('active');
+  document.getElementById('scrollArea').scrollTop = 0;
+  const tabIdx = ['dashboard','calendar','log'].indexOf(t);
+  if (tabIdx >= 0) {
+    document.querySelectorAll('.tab')[tabIdx].classList.add('active');
+    document.querySelectorAll('.bnav-btn')[tabIdx].classList.add('active');
+  }
+  if (t === 'calendar') renderCal();
+  if (t === 'dashboard') renderDash();
+  if (t === 'log') renderAllList();
+}
+
+// ── TOAST ─────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ── STATS ─────────────────────────────────────────────
+function getStats(list) {
+  if (!list.length) return null;
+  const wins = list.filter(t => t.pnl > 0);
+  const losses = list.filter(t => t.pnl < 0);
+  const wr = wins.length / list.length * 100;
+  const totalPnl = list.reduce((a,t) => a+t.pnl, 0);
+  const grossWin = wins.reduce((a,t) => a+t.pnl, 0);
+  const grossLoss = Math.abs(losses.reduce((a,t) => a+t.pnl, 0));
+  const pf = grossLoss === 0 ? grossWin : grossWin / grossLoss;
+  const avgWin = wins.length ? grossWin / wins.length : 0;
+  const avgLoss = losses.length ? grossLoss / losses.length : 0;
+  const rr = avgLoss === 0 ? avgWin : avgWin / avgLoss;
+  const byDay = {};
+  list.forEach(t => { byDay[t.date] = (byDay[t.date]||0) + t.pnl; });
+  const dayVals = Object.values(byDay);
+  return {
+    wr, totalPnl, pf, rr,
+    bestDay: Math.max(...dayVals),
+    worstDay: Math.min(...dayVals),
+    avgDay: dayVals.reduce((a,v)=>a+v,0)/dayVals.length,
+    wins: wins.length, losses: losses.length, total: list.length
+  };
+}
+
+function traderScore(s) {
+  if (!s) return 0;
+  return Math.min(Math.round(Math.min(s.wr,70)*.5 + Math.min(s.pf*10,25) + Math.min(s.rr*5,15)), 99);
+}
+function scoreLabel(s) {
+  if (s>=80) return 'Elite'; if (s>=65) return 'Advanced';
+  if (s>=50) return 'Developing'; if (s>=30) return 'Beginner'; return 'Rookie';
+}
+
+// ── RENDER DASHBOARD ──────────────────────────────────
+function renderDash() {
+  const stats = getStats(trades);
+  const score = traderScore(stats);
+  const circ = 2 * Math.PI * 26;
+  document.getElementById('scoreArc').setAttribute('stroke-dasharray', `${circ*(stats?score/100:0)} ${circ}`);
+  document.getElementById('scoreNum').textContent = stats ? score : '—';
+  document.getElementById('scoreLabel').textContent = stats ? scoreLabel(score) : 'No trades yet';
+
+  const set = (id, v, col) => {
+    const el = document.getElementById(id); if(!el) return;
+    el.textContent = v;
+    if (col) el.style.color = col;
+  };
+
+  if (!stats) {
+    ['s-wr','s-pnl','s-pf','s-rr','m-wr','m-rr','m-pf','m-best','m-worst','m-avg','m-total'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.textContent = '—';
+    });
+  } else {
+    const pc = stats.totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
+    set('s-wr', stats.wr.toFixed(1)+'%');
+    set('s-pnl', (stats.totalPnl>=0?'+':'')+'$'+Math.abs(stats.totalPnl).toFixed(1), pc);
+    const cap = loadCapital();
+    const retPct = cap > 0 ? (stats.totalPnl/cap*100) : null;
+    const retEl = document.getElementById('returnsVal');
+    if (retEl) {
+      retEl.textContent = retPct !== null ? (retPct>=0?'+':'')+retPct.toFixed(2)+'%' : '—';
+      retEl.style.color = retPct === null ? 'var(--muted)' : retPct >= 0 ? 'var(--green)' : 'var(--red)';
+    }
+    set('s-pf', stats.pf.toFixed(2));
+    set('s-rr', stats.rr.toFixed(2));
+    set('m-wr', stats.wr.toFixed(1)+'%', 'var(--green)');
+    set('m-rr', stats.rr.toFixed(2), 'var(--green)');
+    set('m-pf', stats.pf.toFixed(2), 'var(--green)');
+    set('m-best', '$'+stats.bestDay.toFixed(1), 'var(--green)');
+    set('m-worst', '$'+stats.worstDay.toFixed(1), 'var(--red)');
+    set('m-avg', '$'+stats.avgDay.toFixed(1), stats.avgDay>=0?'var(--green)':'var(--red)');
+    set('m-total', stats.total, 'var(--text)');
+  }
+  renderGrowthChart();
+  renderTradeList('recentList', [...trades].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5));
+}
+
+// ── GROWTH CHART ──────────────────────────────────────
+function setRange(r, btn) {
+  chartRange = r;
+  document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrowthChart();
+}
+
+function renderGrowthChart() {
+  const canvas = document.getElementById('growthChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const byDay = {};
+  trades.forEach(t => { byDay[t.date] = (byDay[t.date]||0) + t.pnl; });
+  let days = Object.keys(byDay).sort();
+  if (chartRange === '7') days = days.slice(-7);
+  else if (chartRange === '30') days = days.slice(-30);
+  let cum = 0;
+  const points = [{ label:'', val:0 }];
+  days.forEach(d => { cum += byDay[d]; points.push({ label: d.slice(5), val: cum }); });
+  const total = cum;
+  const totalEl = document.getElementById('chartTotalVal');
+  totalEl.textContent = (total>=0?'+':'')+'$'+Math.abs(total).toFixed(1);
+  totalEl.className = 'chart-total ' + (total>=0?'pos':'neg');
+  document.getElementById('chartSubVal').textContent = days.length + ' day'+(days.length!==1?'s':'')+' tracked';
+  const dpr = window.devicePixelRatio||1;
+  const W = canvas.parentElement.clientWidth - 28;
+  const H = 130;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+  if (points.length < 2) {
+    ctx.fillStyle='#6b6b75'; ctx.font='12px DM Mono,monospace'; ctx.textAlign='center';
+    ctx.fillText('Log trades to see growth curve', W/2, H/2); return;
+  }
+  const vals = points.map(p=>p.val);
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+  const range = maxV - minV || 1;
+  const pad = {t:12,b:22,l:6,r:6};
+  const cW = W-pad.l-pad.r, cH = H-pad.t-pad.b;
+  const xOf = i => pad.l + (i/(points.length-1))*cW;
+  const yOf = v => pad.t + (1-(v-minV)/range)*cH;
+  // Zero line
+  ctx.beginPath(); ctx.strokeStyle='#2a2a30'; ctx.lineWidth=1;
+  ctx.setLineDash([3,4]);
+  const y0 = yOf(Math.max(minV,0));
+  ctx.moveTo(pad.l,y0); ctx.lineTo(W-pad.r,y0); ctx.stroke();
+  ctx.setLineDash([]);
+  const isPos = total >= 0;
+  const col = isPos ? '#00e676' : '#ff3d57';
+  // Fill
+  const grad = ctx.createLinearGradient(0,pad.t,0,H-pad.b);
+  grad.addColorStop(0, isPos?'rgba(0,230,118,0.22)':'rgba(255,61,87,0.22)');
+  grad.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.beginPath();
+  ctx.moveTo(xOf(0), yOf(points[0].val));
+  for (let i=1;i<points.length;i++) {
+    const cpx = (xOf(i-1)+xOf(i))/2;
+    ctx.bezierCurveTo(cpx,yOf(points[i-1].val),cpx,yOf(points[i].val),xOf(i),yOf(points[i].val));
+  }
+  ctx.lineTo(xOf(points.length-1),H-pad.b); ctx.lineTo(xOf(0),H-pad.b);
+  ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+  // Line
+  ctx.beginPath(); ctx.strokeStyle=col; ctx.lineWidth=2.5; ctx.lineJoin='round';
+  ctx.moveTo(xOf(0),yOf(points[0].val));
+  for (let i=1;i<points.length;i++) {
+    const cpx=(xOf(i-1)+xOf(i))/2;
+    ctx.bezierCurveTo(cpx,yOf(points[i-1].val),cpx,yOf(points[i].val),xOf(i),yOf(points[i].val));
+  }
+  ctx.stroke();
+  // Labels
+  const step = Math.max(1,Math.ceil((points.length-1)/5));
+  points.forEach((p,i) => {
+    if (i===0) return;
+    if (i%step!==0 && i!==points.length-1) return;
+    ctx.beginPath(); ctx.arc(xOf(i),yOf(p.val),2.5,0,Math.PI*2);
+    ctx.fillStyle=col; ctx.fill();
+    ctx.fillStyle='#6b6b75'; ctx.font='8px DM Mono,monospace'; ctx.textAlign='center';
+    ctx.fillText(p.label, xOf(i), H-pad.b+13);
+  });
+  // End label
+  const lx=xOf(points.length-1), ly=yOf(points[points.length-1].val);
+  ctx.fillStyle=col; ctx.font='bold 9px DM Mono,monospace';
+  ctx.textAlign=lx>W-55?'right':'left';
+  ctx.fillText((total>=0?'+':'')+'$'+Math.abs(total).toFixed(0), lx+(lx>W-55?-5:5), ly-6);
+}
+
+// ── LOG TRADE ─────────────────────────────────────────
+function logTrade() {
+  const sym = document.getElementById('f-symbol').value.trim().toUpperCase();
+  const date = document.getElementById('f-date').value;
+  const dir = document.getElementById('f-dir').value;
+  const contracts = parseFloat(document.getElementById('f-contracts').value) || 1;
+  const entry = parseFloat(document.getElementById('f-entry').value) || null;
+  const exit = parseFloat(document.getElementById('f-exit').value) || null;
+  const pnlRaw = parseFloat(document.getElementById('f-pnl').value);
+  const pnlSign = document.getElementById('pnlSign').textContent === '+' ? 1 : -1;
+  const pnl = pnlRaw * pnlSign;
+  const session = document.getElementById('f-session').value;
+  const notes = document.getElementById('f-notes').value.trim();
+  if (!sym) { showToast('Enter a symbol'); return; }
+  if (!date) { showToast('Pick a date'); return; }
+  if (isNaN(pnl)) { showToast('Enter P&L amount'); return; }
+  trades.push({ id: Date.now(), sym, date, dir, contracts, entry, exit, pnl, session, notes });
+  save();
+  showToast('Trade logged ✓');
+  document.getElementById('f-symbol').value = '';
+  document.getElementById('f-pnl').value = '';
+  document.getElementById('f-entry').value = '';
+  document.getElementById('f-exit').value = '';
+  document.getElementById('f-notes').value = '';
+  document.getElementById('f-pnl').className = 'form-input';
+  resetPnlSign();
+  renderAllList();
+}
+
+function deleteTrade(id) {
+  if (!confirm('Delete this trade?')) return;
+  trades = trades.filter(t => t.id !== id);
+  save(); renderDash(); renderAllList(); showToast('Deleted');
+}
+
+// ── RENDER TRADES ─────────────────────────────────────
+function renderTradeList(containerId, list) {
+  const el = document.getElementById(containerId);
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📋</div>No trades yet</div>`; return;
+  }
+  el.innerHTML = list.map(t => `
+    <div class="trade-item ${t.pnl>0?'win':'loss'}" onclick="openEditModal(${t.id})">
+      <div class="trade-left">
+        <h4>${t.sym} · ${t.dir}</h4>
+        <p>${t.date} · ${t.contracts}ct · ${t.session}</p>
+        ${t.notes?`<p style="margin-top:3px;color:#444;font-size:10px">${t.notes}</p>`:''}
+      </div>
+      <div class="trade-right">
+        <div class="trade-pnl ${t.pnl>0?'pos':'neg'}">${t.pnl>0?'+':''}$${Math.abs(t.pnl).toFixed(1)}</div>
+        <div class="trade-meta">${t.entry&&t.exit?t.entry+' → '+t.exit:''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderAllList() {
+  renderTradeList('allList', [...trades].sort((a,b)=>b.date.localeCompare(a.date)));
+}
+
+// ── CALENDAR ──────────────────────────────────────────
+function changeMonth(d) {
+  calMonth += d;
+  if (calMonth>11){calMonth=0;calYear++;} if (calMonth<0){calMonth=11;calYear--;}
+  renderCal();
+}
+
+function renderCal() {
+  const MN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calTitle').textContent = MN[calMonth]+' '+calYear;
+  const byDay={}, byDayCnt={};
+  trades.forEach(t => {
+    byDay[t.date]=(byDay[t.date]||0)+t.pnl;
+    byDayCnt[t.date]=(byDayCnt[t.date]||0)+1;
+  });
+  const first=new Date(calYear,calMonth,1);
+  const last=new Date(calYear,calMonth+1,0);
+  const startDow=first.getDay();
+  const todayStr=fmtDate(now);
+  let cells=[];
+  for(let i=0;i<startDow;i++) cells.push({date:new Date(calYear,calMonth,1-(startDow-i)),cur:false});
+  for(let d=1;d<=last.getDate();d++) cells.push({date:new Date(calYear,calMonth,d),cur:true});
+  const rem=(7-(cells.length%7))%7;
+  for(let i=1;i<=rem;i++) cells.push({date:new Date(calYear,calMonth+1,i),cur:false});
+  const rows=[];
+  for(let i=0;i<cells.length;i+=7) rows.push(cells.slice(i,i+7));
+  const dows=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html=dows.map(d=>`<div class="cal-dow">${d}</div>`).join('')+'<div class="cal-dow wk">Week</div>';
+  rows.forEach(row => {
+    let wPnl=0, hasTrade=false;
+    row.forEach(cell => {
+      const ds=fmtDate(cell.date);
+      const pnl=byDay[ds], cnt=byDayCnt[ds];
+      const isToday=ds===todayStr;
+      let cls='cal-day';
+      if(!cell.cur) cls+=' other-month';
+      if(isToday) cls+=' today';
+      if(pnl!==undefined){cls+=pnl>=0?' has-win':' has-loss';wPnl+=pnl;hasTrade=true;}
+      html+=`<div class="${cls}" onclick="openDay('${ds}')">
+        <div class="day-num">${cell.date.getDate()}</div>
+        ${cnt?`<div class="day-cnt">${cnt}t</div>`:''}
+        ${pnl!==undefined?`<div class="day-pnl ${pnl>=0?'pos':'neg'}">${pnl>=0?'':'-'}$${Math.abs(pnl).toFixed(1)}</div>`:''}
+      </div>`;
+    });
+    const wc=!hasTrade?'zero':wPnl>0?'pos':'neg';
+    html+=`<div class="week-cell"><div class="wk-lbl">P/L</div><div class="wk-val ${wc}">${hasTrade?(wPnl>=0?'+':'-')+'$'+Math.abs(wPnl).toFixed(1):'—'}</div></div>`;
+  });
+  document.getElementById('calGrid').innerHTML=html;
+}
+
+function openDay(ds) {
+  const dayTrades=trades.filter(t=>t.date===ds);
+  const d=new Date(ds+'T12:00:00');
+  document.getElementById('modalTitle').textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const total=dayTrades.reduce((a,t)=>a+t.pnl,0);
+  let html='';
+  if(!dayTrades.length){
+    html='<div class="empty" style="padding:16px 0"><div class="empty-icon">📭</div>No trades</div>';
+  } else {
+    html+=`<div style="margin-bottom:10px;padding:10px 12px;background:var(--surface2);border-radius:10px;display:flex;justify-content:space-between;align-items:center">
+      <span style="color:var(--muted);font-size:11px;font-family:'DM Mono',monospace">DAY TOTAL</span>
+      <span style="font-weight:800;font-size:18px;color:${total>=0?'var(--green)':'var(--red)'}">${total>=0?'+':'-'}$${Math.abs(total).toFixed(1)}</span>
+    </div>`;
+    dayTrades.forEach(t=>{
+      html+=`<div class="trade-item ${t.pnl>0?'win':'loss'}" style="margin-bottom:7px">
+        <div class="trade-left"><h4>${t.sym} · ${t.dir}</h4><p>${t.contracts}ct · ${t.session}</p>${t.notes?`<p style="color:#444;margin-top:2px;font-size:10px">${t.notes}</p>`:''}</div>
+        <div class="trade-right"><div class="trade-pnl ${t.pnl>0?'pos':'neg'}">${t.pnl>0?'+':''}$${Math.abs(t.pnl).toFixed(1)}</div></div>
+      </div>`;
+    });
+  }
+  document.getElementById('modalBody').innerHTML=html;
+  document.getElementById('dayModal').classList.add('open');
+}
+function closeDayModal(e){if(e.target===document.getElementById('dayModal'))closeDayModalBtn();}
+function closeDayModalBtn(){document.getElementById('dayModal').classList.remove('open');}
+
+// ── STARTING CAPITAL ──────────────────────────────────
+function saveCapital(v) {
+  localStorage.setItem('vela_capital', v);
+  renderDash();
+}
+function loadCapital() {
+  const v = localStorage.getItem('vela_capital');
+  if (v) document.getElementById('capitalInput').value = v;
+  return parseFloat(v) || 0;
+}
+
+// ── EDIT TRADE ────────────────────────────────────────
+function openEditModal(id) {
+  const t = trades.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('e-id').value = t.id;
+  document.getElementById('e-symbol').value = t.sym;
+  document.getElementById('e-date').value = t.date;
+  document.getElementById('e-dir').value = t.dir;
+  document.getElementById('e-contracts').value = t.contracts;
+  document.getElementById('e-entry').value = t.entry || '';
+  document.getElementById('e-exit').value = t.exit || '';
+  document.getElementById('e-pnl').value = t.pnl;
+  document.getElementById('e-session').value = t.session;
+  document.getElementById('e-notes').value = t.notes || '';
+  document.getElementById('editModal').classList.add('open');
+}
+function saveEdit() {
+  const id = parseInt(document.getElementById('e-id').value);
+  const idx = trades.findIndex(t => t.id === id);
+  if (idx === -1) return;
+  trades[idx] = {
+    ...trades[idx],
+    sym: document.getElementById('e-symbol').value.trim().toUpperCase(),
+    date: document.getElementById('e-date').value,
+    dir: document.getElementById('e-dir').value,
+    contracts: parseFloat(document.getElementById('e-contracts').value)||1,
+    entry: parseFloat(document.getElementById('e-entry').value)||null,
+    exit: parseFloat(document.getElementById('e-exit').value)||null,
+    pnl: parseFloat(document.getElementById('e-pnl').value),
+    session: document.getElementById('e-session').value,
+    notes: document.getElementById('e-notes').value.trim()
+  };
+  save(); closeEditModalBtn(); renderDash(); renderAllList(); showToast('Trade updated ✓');
+}
+function deleteFromEdit() {
+  const id = parseInt(document.getElementById('e-id').value);
+  if (!confirm('Delete this trade?')) return;
+  trades = trades.filter(t => t.id !== id);
+  save(); closeEditModalBtn(); renderDash(); renderAllList(); showToast('Deleted');
+}
+function closeEditModal(e) { if(e.target===document.getElementById('editModal')) closeEditModalBtn(); }
+function closeEditModalBtn() { document.getElementById('editModal').classList.remove('open'); }
+
+// ── PNL SIGN TOGGLE ──────────────────────────────────
+function togglePnlSign() {
+  const btn = document.getElementById('pnlSign');
+  const isPos = btn.textContent === '+';
+  btn.textContent = isPos ? '−' : '+';
+  btn.style.color = isPos ? 'var(--red)' : 'var(--green)';
+  btn.style.borderColor = isPos ? 'var(--red)' : 'var(--border)';
+  // update input color
+  const v = parseFloat(document.getElementById('f-pnl').value);
+  if (!isNaN(v)) document.getElementById('f-pnl').className = 'form-input' + (isPos ? ' pnl-neg' : ' pnl-pos');
+}
+
+// Reset sign on new trade
+function resetPnlSign() {
+  const btn = document.getElementById('pnlSign');
+  btn.textContent = '+';
+  btn.style.color = 'var(--green)';
+  btn.style.borderColor = 'var(--border)';
+}
+
+// ── BOOT ──────────────────────────────────────────────
+loadCapital();
+renderDash();
+renderAllList();
+renderCal();
+</script>
+</body>
+</html>

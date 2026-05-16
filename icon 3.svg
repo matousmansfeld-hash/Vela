@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="110" fill="#0a0a0b"/>
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#0d2b1a"/>
+      <stop offset="100%" stop-color="#0a0a0b"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Candlestick chart bars subtle bg -->
+  <rect x="100" y="320" width="28" height="80" rx="4" fill="#1a3a24" opacity="0.5"/>
+  <rect x="148" y="280" width="28" height="120" rx="4" fill="#1a3a24" opacity="0.5"/>
+  <rect x="196" y="300" width="28" height="100" rx="4" fill="#1a3a24" opacity="0.5"/>
+  <rect x="244" y="240" width="28" height="160" rx="4" fill="#1a3a24" opacity="0.5"/>
+  <rect x="292" y="260" width="28" height="140" rx="4" fill="#1a3a24" opacity="0.5"/>
+  <rect x="340" y="200" width="28" height="200" rx="4" fill="#1a3a24" opacity="0.5"/>
+  <rect x="388" y="180" width="28" height="220" rx="4" fill="#1a3a24" opacity="0.5"/>
+  <!-- Main V/candlestick mark -->
+  <path d="M140 380 L256 140 L372 380" stroke="#00e676" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow)"/>
+  <path d="M140 380 L256 140 L372 380" fill="rgba(0,230,118,0.08)" stroke="none"/>
+  <circle cx="256" cy="140" r="18" fill="#00e676" filter="url(#glow)"/>
+  <!-- Bottom text -->
+  <text x="256" y="460" font-family="Georgia, serif" font-size="52" font-weight="bold" fill="#00e676" text-anchor="middle" opacity="0.9">VELA</text>
+</svg>
